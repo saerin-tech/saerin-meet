@@ -1,0 +1,45 @@
+# LiveKit Egress Configuration for Recording
+
+# API Key and Secret (must match livekit.yaml)
+api_key: API89e02ebcc4a4764a
+api_secret: Vh3j/oCUQSBmOGKXObQR6zumI6wxW6lK+hECSFJs7KA=
+
+# WebSocket URL of your LiveKit server
+# Use the Docker service name since egress is on the same Docker network
+ws_url: ws://livekit:7880
+
+# CRITICAL: Allow insecure WebSocket connections (required for local dev without SSL)
+insecure: true
+
+# Redis connection for coordination
+redis:
+  address: redis:6379
+
+# Health check port
+health_port: 9090
+
+# Logging
+log_level: debug
+
+# CPU and memory limits
+cpu_cost:
+  room_composite_cpu_cost: 3.0
+  web_cpu_cost: 3.0
+  track_composite_cpu_cost: 2.0
+  track_cpu_cost: 1.0
+
+# Session limits
+session_limits:
+  file_output_limit: 10
+  stream_output_limit: 10
+
+# S3 Storage Configuration (MinIO)
+# IMPORTANT: Must be under 'storage' parent key
+storage:
+  s3:
+    access_key: minioadmin
+    secret: minioadmin
+    region: us-east-1
+    endpoint: http://minio:9000
+    bucket: recordings
+    force_path_style: true

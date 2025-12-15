@@ -1,0 +1,46 @@
+port: 7880
+bind_addresses:
+  - "0.0.0.0"
+
+rtc:
+  port_range_start: 50000
+  port_range_end: 50100
+  # CRITICAL: Disable external IP detection for Docker networking
+  use_external_ip: false
+  tcp_port: 7881
+  udp_port: 7882
+
+redis:
+  address: redis:6379
+
+keys:
+#   # Generate these with: openssl rand -base64 32
+#   # API_Key: API89e02ebcc4a4764a
+#   # API_Secret: Vh3j/oCUQSBmOGKXObQR6zumI6wxW6lK+hECSFJs7KA=
+  "API89e02ebcc4a4764a": "Vh3j/oCUQSBmOGKXObQR6zumI6wxW6lK+hECSFJs7KA="
+
+
+room:
+  auto_create: true
+  empty_timeout: 300
+  max_participants: 100
+
+
+# Disable TURN for local development
+turn:
+  enabled: false
+
+logging:
+  level: debug  # Changed to debug for troubleshooting
+  sample: false
+
+# turn:
+#   enabled: true
+#   # domain: your-domain.com
+#   tls_port: 443
+#   udp_port: 3478
+#   external_tls: true
+
+# logging:
+#   level: info
+#   sample: false

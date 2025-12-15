@@ -1,0 +1,30 @@
+{
+  "name": "saerinmeet",
+  "version": "1.0.0",
+  "description": "Full-stack MERN video conferencing application with LiveKit",
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "install:all": "npm run install:server && npm run install:client",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "start:server": "cd server && npm start",
+    "build:client": "cd client && npm run build",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "setup": "npm run install:all"
+  },
+  "keywords": [
+    "video-conferencing",
+    "livekit",
+    "webrtc",
+    "mern",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

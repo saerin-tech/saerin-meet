@@ -1,0 +1,35 @@
+# version: '3.9'
+
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml
+    restart: unless-stopped
+    ports:
+      - "7880:7880"    # HTTP
+      - "7881:7881"    # WebRTC TCP
+      - "7882:7882/udp" # WebRTC UDP
+      - "50000-50100:50000-50100/udp" # Reduced to 100 ports (good for ~50 users)
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml
+    environment:
+      - LIVEKIT_CONFIG=/etc/livekit.yaml
+    # environment:
+    #   - LIVEKIT_PORT=7880
+    #   - LIVEKIT_REDIS_HOST=redis:6379
+    #   - LIVEKIT_KEYS=API89e02ebcc4a4764a:Vh3j/oCUQSBmOGKXObQR6zumI6wxW6lK+hECSFJs7KA=
+    #   - LIVEKIT_RTC_PORT_RANGE_START=50000
+    #   - LIVEKIT_RTC_PORT_RANGE_END=50100
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+    # driver: bridge

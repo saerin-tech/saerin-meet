@@ -1,0 +1,134 @@
+.recordings {
+  padding: 40px 20px;
+}
+
+.recordings h1 {
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.recordings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.recording-card {
+  background: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.recording-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.recording-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.recording-header h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.recording-date {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.recording-info {
+  margin-bottom: 20px;
+}
+
+.recording-info p {
+  margin: 8px 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.recording-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.recording-actions .btn {
+  min-width: 100px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 8px 16px;
+}
+
+.badge-warning {
+  background: #ffc107;
+  color: #333;
+}
+
+.processing-spinner {
+  display: inline-block;
+  animation: rotate 1s linear infinite;
+  margin-left: 5px;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.processing-message {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+}
+
+.processing-message p {
+  margin: 0;
+  color: #856404;
+  font-size: 14px;
+}
+
+.error-message {
+  background: #f8d7da;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+}
+
+.error-message p {
+  margin: 0;
+  color: #721c24;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .recording-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .recording-actions {
+    flex-direction: column;
+  }
+
+  .recording-actions .btn {
+    width: 100%;
+  }
+}
