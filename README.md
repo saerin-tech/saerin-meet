@@ -467,6 +467,275 @@ storage:
     force_path_style: true
 ```
 
+#### Start Services
+
+```bash
+cd livekit
+docker compose up -d
+
+# Verify all services are running
+docker compose ps
+
+# Check logs
+docker compose logs -f
+```
+
+### Option 3: Kubernetes Deployment
+
+For production-grade, scalable deployments, use Kubernetes with Helm charts.
+
+#### Prerequisites
+
+- Kubernetes cluster (v1.19+)
+- kubectl configured
+- Helm 3 installed
+
+#### Install LiveKit using Helm
+
+```bash
+# Add LiveKit Helm repository
+helm repo add livekit https://helm.livekit.io
+helm repo update
+
+# Create namespace
+kubectl create namespace livekit
+
+# Install LiveKit server
+helm install livekit-server livekit/livekit-server \
+  --namespace livekit \
+  --set livekit.config.keys.APIK8s: "your-secure-api-secret"
+```
+
+#### LiveKit Server Values (`livekit-values.yaml`)
+
+```yaml
+replicaCount: 2
+
+livekit:
+  config:
+    port: 7880
+    rtc:
+      port_range_start: 50000
+      port_range_end: 50100
+      use_external_ip: true
+      tcp_port: 7881
+      udp_port: 7882
+    
+    redis:
+      address: redis-service:6379
+    
+    keys:
+      APIk8s-key: "your-secure-api-secret"
+    
+    room:
+      auto_create: true
+      empty_timeout: 300
+      max_participants: 100
+
+service:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: livekit.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: livekit-tls
+      hosts:
+        - livekit.yourdomain.com
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+```
+
+#### Deploy with Custom Values
+
+```bash
+helm install livekit-server livekit/livekit-server \
+  --namespace livekit \
+  --values livekit-values.yaml
+```
+
+#### Install Redis (for LiveKit coordination)
+
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+helm install redis bitnami/redis \
+  --namespace livekit \
+  --set auth.enabled=false \
+  --set master.persistence.enabled=true \
+  --set master.persistence.size=10Gi
+```
+
+#### Install Egress Service
+
+```yaml
+# egress-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit-egress
+  namespace: livekit
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: livekit-egress
+  template:
+    metadata:
+      labels:
+        app: livekit-egress
+    spec:
+      containers:
+      - name: egress
+        image: livekit/egress:latest
+        env:
+        - name: EGRESS_CONFIG_FILE
+          value: /etc/egress.yaml
+        volumeMounts:
+        - name: config
+          mountPath: /etc/egress.yaml
+          subPath: egress.yaml
+        securityContext:
+          capabilities:
+            add:
+            - SYS_ADMIN
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+      volumes:
+      - name: config
+        configMap:
+          name: egress-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: egress-config
+  namespace: livekit
+data:
+  egress.yaml: |
+    api_key: APIk8s-key
+    api_secret: your-secure-api-secret
+    ws_url: ws://livekit-server:7880
+    insecure: false
+    
+    health_port: 9090
+    log_level: info
+    
+    redis:
+      address: redis-service:6379
+    
+    storage:
+      s3:
+        access_key: ${MINIO_ACCESS_KEY}
+        secret: ${MINIO_SECRET_KEY}
+        endpoint: http://minio-service:9000
+        bucket: recordings
+        force_path_style: true
+```
+
+#### Deploy Egress
+
+```bash
+kubectl apply -f egress-deployment.yaml
+```
+
+#### Install MinIO on Kubernetes
+
+```bash
+helm install minio bitnami/minio \
+  --namespace livekit \
+  --set auth.rootUser=minioadmin \
+  --set auth.rootPassword=minioadmin \
+  --set persistence.size=100Gi \
+  --set service.type=LoadBalancer \
+  --set service.ports.api=9000 \
+  --set service.ports.console=9001
+```
+
+#### Verify Deployment
+
+```bash
+# Check all pods are running
+kubectl get pods -n livekit
+
+# Check services
+kubectl get svc -n livekit
+
+# Get LoadBalancer IP for LiveKit
+kubectl get svc livekit-server -n livekit
+
+# Check logs
+kubectl logs -n livekit -l app=livekit-server --tail=100
+kubectl logs -n livekit -l app=livekit-egress --tail=100
+```
+
+#### Update SaerinMeet Configuration
+
+```env
+# server/.env
+LIVEKIT_API_KEY=APIk8s-key
+LIVEKIT_API_SECRET=your-secure-api-secret
+LIVEKIT_URL=wss://livekit.yourdomain.com
+
+# MinIO endpoint (use LoadBalancer IP or domain)
+MINIO_ENDPOINT=minio.yourdomain.com
+MINIO_PORT=9000
+MINIO_USE_SSL=true
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET=recordings
+```
+
+#### Scaling
+
+```bash
+# Scale LiveKit server
+kubectl scale deployment livekit-server -n livekit --replicas=5
+
+# Scale Egress service
+kubectl scale deployment livekit-egress -n livekit --replicas=3
+
+# Check HPA (if autoscaling enabled)
+kubectl get hpa -n livekit
+```
+
+#### Monitoring
+
+```bash
+# Install Prometheus & Grafana for monitoring
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace
+
+# Access Grafana (default: admin/prom-operator)
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
+```
 
 ---
 
